@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/laws")
+@RequestMapping("/{version}/laws")
 public class LawController {
 
     private final LawService lawService;
@@ -16,7 +16,7 @@ public class LawController {
         this.lawService = lawService;
     }
 
-    @GetMapping
+    @GetMapping(version = "1+")
     public ResponseEntity<LawsResponse> getLaws(@RequestParam(defaultValue = "0") int page,
                                                 @RequestParam(defaultValue = "20") int size,
                                                 @RequestParam(required = false) LawStatus status,

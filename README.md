@@ -3,14 +3,19 @@ Mobile Backend for Frontend Service for VotingBooth
 
 It exposes the endpoints the mobile app needs and calls law-api and representative-api behind them.
 
-| Endpoint                         | Calls                                   |
-|----------------------------------|-----------------------------------------|
-| `GET /laws?page&size&status&category` | law-api `GET /laws`                |
-| `GET /representatives`           | representative-api `GET /representatives` |
-| `GET /representatives/{id}`      | representative-api `GET /representatives/{id}` |
+| Endpoint                                 | Calls                                          |
+|------------------------------------------|------------------------------------------------|
+| `GET /v1/laws?page&size&status&category` | law-api `GET /laws`                            |
+| `GET /v1/representatives`                | representative-api `GET /representatives`      |
+| `GET /v1/representatives/{id}`           | representative-api `GET /representatives/{id}` |
 
-Errors are `ProblemDetail`s: 400 for an invalid page, 404 for an unknown representative, 502 when an API fails or
-can't be reached.
+The API version is the first path segment, using Spring's built-in API versioning (`spring.mvc.apiversion.*`).
+Endpoints are mapped to version `1+`, so they also serve later versions until they change. When an endpoint needs a
+breaking change, add `2` to `spring.mvc.apiversion.supported`, map the new method to `2+` and the old one to `1`:
+the other endpoints keep answering on `/v2/...` unchanged. An unsupported or missing version is a 400.
+
+Errors are `ProblemDetail`s: 400 for an invalid page, parameter or API version, 404 for an unknown representative,
+502 when an API fails or can't be reached.
 
 ## Running locally
 

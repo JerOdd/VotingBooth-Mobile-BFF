@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/representatives")
+@RequestMapping("/{version}/representatives")
 public class RepresentativeController {
 
     private final RepresentativeService representativeService;
@@ -21,12 +21,12 @@ public class RepresentativeController {
         this.representativeService = representativeService;
     }
 
-    @GetMapping
+    @GetMapping(version = "1+")
     public ResponseEntity<RepresentativesResponse> getRepresentatives() {
         return ResponseEntity.ok(representativeService.getRepresentatives());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(path = "/{id}", version = "1+")
     public ResponseEntity<RepresentativeResponse> getRepresentative(@PathVariable UUID id) {
         return ResponseEntity.ok(representativeService.getRepresentative(id));
     }
