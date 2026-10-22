@@ -1,0 +1,70 @@
+# The APIs the BFF calls, built from the sibling law-service and representative-service checkouts,
+# each with its own Postgres. Flyway creates the schemas on startup; the data comes from each service's job.
+# Set LAW_SERVICE_PATH / REPRESENTATIVE_SERVICE_PATH if the checkouts live elsewhere.
+services:
+  law-postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_DB: laws
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d laws"]
+      interval: 2s
+      retries: 30
+    volumes:
+      - law-postgres-data:/var/lib/postgresql/data
+
+  law-api:
+    build:
+      context: ${LAW_SERVICE_PATH:-../law-service}
+      dockerfile: api/Dockerfile
+    restart: always
+    depends_on:
+      law-postgres:
+        condition: service_healthy
+    environment:
+      # LAW_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5434/laws reuses the database
+      # of law-service's own compose, with the data its job already synced.
+      SPRING_DATASOURCE_URL: ${LAW_DATASOURCE_URL:-jdbc:postgresql://law-postgres:5432/laws}
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    # 8083 on the host: 8080 is auth-api, 8081 gateway-api, 8082 vote-api.
+    ports:
+      - "${LAW_API_PORT:-8083}:8080"
+
+  representative-postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_DB: representatives
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d representatives"]
+      interval: 2s
+      retries: 30
+    volumes:
+      - representative-postgres-data:/var/lib/postgresql/data
+
+  representative-api:
+    build:
+      context: ${REPRESENTATIVE_SERVICE_PATH:-../representative-service}
+      dockerfile: api/Dockerfile
+    restart: always
+    depends_on:
+      representative-postgres:
+        condition: service_healthy
+    environment:
+      # REPRESENTATIVE_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5433/representatives reuses the
+      # database of representative-service's own compose.
+      SPRING_DATASOURCE_URL: ${REPRESENTATIVE_DATASOURCE_URL:-jdbc:postgresql://representative-postgres:5432/representatives}
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    ports:
+      - "${REPRESENTATIVE_API_PORT:-8085}:8085"
+
+volumes:
+  law-postgres-data:
+  representative-postgres-data:
